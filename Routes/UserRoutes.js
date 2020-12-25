@@ -58,9 +58,6 @@ router.post("/register", [
         const fullName = firstName + " " + lastName
 
         const customer = await createCustomer(fullName, email)
-        if (!customer) {
-            return res.json("error in creating customer in stripe")
-        }
 
         const stripeCustomerID = customer.id
 
@@ -86,14 +83,14 @@ router.post("/register", [
             { expiresIn: "10h" },
             (err, token) => {
                 if (err) throw err;
-                res.json({ token, });
+                res.json({ token });
             }
         );
 
 
     } catch (error) {
-        console.error(error)
-        res.status(500).send('server error')
+        console.error(error);
+        return res.status(500).send(error);
     }
 
 })
@@ -150,9 +147,9 @@ router.post(
                     res.json({ token });
                 }
             );
-        } catch (err) {
-            console.error(err.message);
-            return res.status(500).send("server error");
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send(error);
         }
     }
 );
@@ -181,9 +178,11 @@ router.post("/customer/save-credit-card", auth,
             const customer = await User.findById(req.user.id)
 
             if (!customer) {
-                return res.json("user not found")
+                return res.json({ error: "user not found" })
             }
 
+            // just a test card provided by stripe since the charge and card related endpoints are 
+            // experimental
             const cardParams = {
                 card: {
                     number: '5555555555554444',
@@ -194,21 +193,15 @@ router.post("/customer/save-credit-card", auth,
             }
 
             const token = await tokenizeCard(cardParams);
-            if (!token) {
-                return res.json("error from tokenizing card in stripe")
-            }
 
             const cardToken = token.id
 
             const card = await saveCreditCardFromToken(customer.stripeCustomerID, cardToken);
-            if (!card) {
-                return res.json("error from saving card from token in stripe")
-            }
 
             res.json(card)
         } catch (error) {
             console.error(error)
-            res.status(500)
+            return res.status(500).send({ error: "Couldnt save credit card in stripe" });
         }
 
     })
@@ -224,7 +217,7 @@ router.post("/customer/remove-credit-card/:card_id", auth,
             const customer = await User.findById(req.user.id)
 
             if (!customer) {
-                return res.json("user not found")
+                return res.status(404).send({ error: "user not found" })
             }
 
             const { card_id } = req.params
@@ -235,7 +228,7 @@ router.post("/customer/remove-credit-card/:card_id", auth,
             );
 
             if (!card) {
-                return res.json("You dont have that card saved")
+                return res.status(403).send({ error: "You dont have that card saved" })
             }
 
 
@@ -244,19 +237,11 @@ router.post("/customer/remove-credit-card/:card_id", auth,
                 card_id
             );
 
-            if (!deleted) {
-                return res.json("error in deleting card in stripe")
-            }
 
-            res.json("removed card")
+            res.json("Deleted card")
         } catch (error) {
             console.error(error)
-            if (error.code === "resource_missing") {
-                return res.status(500).send("you dont have that card saved / invalid card")
-            }
-
-            res.status(500).send("an error occured")
-
+            return res.status(500).send({ error: "Couldnt delete credit card in stripe" });
         }
 
     })
@@ -272,7 +257,7 @@ router.post("/customer/make-default-credit-card/:card_id", auth,
             const customer = await User.findById(req.user.id)
 
             if (!customer) {
-                return res.json("user not found")
+                return res.status(404).send({ error: "user not found" })
             }
 
             const { card_id } = req.params
@@ -283,7 +268,7 @@ router.post("/customer/make-default-credit-card/:card_id", auth,
             );
 
             if (!card) {
-                return res.json("You dont have that card saved")
+                return res.status(403).send({ error: "You dont have that card saved" })
             }
 
             const updatedDefaultCard = await makeDefaultCard(
@@ -291,18 +276,10 @@ router.post("/customer/make-default-credit-card/:card_id", auth,
                 card_id
             );
 
-            if (!updatedDefaultCard) {
-                return res.json("error in updating the default card in stripe")
-            }
-
             res.json("updated card")
         } catch (error) {
             console.error(error)
-            if (error.code === "resource_missing") {
-                return res.status(500).send("you dont have that card saved / invalid card")
-            }
-
-            res.status(500).send("an error occured")
+            res.status(500).send({ error: "Couldnt make credit card the default for customer in stripe" });
         }
 
     })
@@ -318,22 +295,22 @@ router.get("/customer/list-all-credit-cards", auth,
             const customer = await User.findById(req.user.id)
 
             if (!customer) {
-                return res.json("user not found")
+                return res.status(404).send({ error: "user not found" })
             }
 
-            const cards = getAllCreditCards(
+            const cards = await getAllCreditCards(
                 customer.stripeCustomerID
             );
 
             if (!cards) {
-                return res.json("you have no cards saved")
+                return res.status(403).send({ error: "you have no cards saved" })
             }
 
             res.json(cards)
 
         } catch (error) {
             console.error(error)
-            res.status(500)
+            return res.status(500).send({ error: "Couldnt get all credit cards in stripe" });
         }
 
     })
@@ -351,18 +328,16 @@ router.post("/customer/credit-card/tokenize", auth,
             const customer = await User.findById(req.user.id)
 
             if (!customer) {
-                res.json("user not found")
+                return res.status(404).send({ error: "user not found" })
             }
 
             const tokenizedCard = await tokenizeCard(cardParams);
-            if (!tokenizedCard) {
-                return res.json("error in stripe")
-            }
             const cardToken = tokenizedCard.id
+
             res.json(cardToken)
         } catch (error) {
-            console.error(error)
-            res.status(500).send("an error occured")
+            console.error(error);
+            return res.status(500).send({ error: "Couldnt tokenize the card in stripe" });
 
         }
 

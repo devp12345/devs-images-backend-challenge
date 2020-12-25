@@ -4,7 +4,6 @@ const auth = require("../Middleware/auth")
 const User = require("../Models/UsersModel");
 const Images = require("../Models/ImageModel");
 const { check, validationResult } = require('express-validator');
-const stripe = require('stripe')('sk_test_51HzQ9CKXcuGMjsGnqKxxOaxfVBBkwki15ACHXWTaipcXj1mRkCI0Gyj85Q7z6yEeMDJOZ30ppA4tX9AG0bdYKLhB004Ei5iv3R');
 const fs = require("fs")
 const FileType = require("file-type")
 const multiparty = require("multiparty")
@@ -44,25 +43,25 @@ router.post("/admin/image/upload", auth, async (req, res) => {
                 const formData = JSON.parse(fields["body"][0])
 
                 if (formData['image_name'] === null) {
-                    return res.json("error, must enter an image name")
+                    return res.json({ error: "Error, must enter an image name" })
                 }
 
                 if (formData['cost'] === null) {
-                    return res.json("error, cost must be entered")
+                    return res.json({ error: "Error, cost must be entered" })
                 } else if (isNaN(formData['cost'])) {
-                    return res.json("error, cost must be numeric")
+                    return res.json({ error: "Error, cost must be numeric" })
                 }
 
                 const { image_name, cost } = formData
 
                 if (req.user.accountType !== "admin") {
-                    return res.error(403).send("error, you cant post pictures unless you are an admin")
+                    return res.error(403).send({ error: "Error, you cant post pictures unless you are an admin" })
                 }
 
                 const admin = await User.findById(req.user.id)
 
                 if (!admin) {
-                    return res.json("error, admin not found")
+                    return res.json({ error: "Error, admin not found" })
                 }
 
                 const img = new Images({
@@ -73,23 +72,21 @@ router.post("/admin/image/upload", auth, async (req, res) => {
 
                 await img.save()
 
-                let uploadedData = [];
                 const fileUpload = files["null"][0]
                 const path = fileUpload.path;
                 const buffer = fs.readFileSync(path);
                 const type = await FileType.fromBuffer(buffer);
                 const fileName = `${img._id}`;
                 const data = await uploadFile(buffer, fileName, type);
-                uploadedData.push(data);
-                return res.status(200).send({ uploadedData, img });
+                return res.status(200).send({ data, img });
 
-            } catch (err) {
-                console.error(err);
-                if (err.code == "AccessDenied") {
-                    return res.status(403).send(err);
+            } catch (error) {
+                console.error(error);
+                if (error.code == "AccessDenied") {
+                    return res.status(403).send(error);
                 }
 
-                return res.status(500).send(err);
+                return res.status(500).send(error);
             }
         });
     } catch (error) {
@@ -106,14 +103,14 @@ router.get("/admin/image/:image_id", auth, async (req, res) => {
     try {
 
         if (req.user.accountType !== "admin") {
-            return res.status(403).send("must be an admin");
+            return res.status(403).send({ error: "Error, must be an admin" });
         }
 
         const { image_id } = req.params
         const img = await Images.findById(image_id)
 
         if (!img) {
-            return res.status(404).send("image not found");
+            return res.status(404).send({ error: "Error, image not found" });
         }
 
         res.json(img.nameOfImage)
@@ -130,13 +127,13 @@ router.get("/admin/image/:image_id", auth, async (req, res) => {
 router.get("/admin/images", auth, async (req, res) => {
     try {
         if (req.user.accountType !== "admin") {
-            return res.status(403).send("must be an admin");
+            return res.status(403).send({ error: "Error, must be an admin" });
         }
 
         const all = await Images.find({})
 
         if (!all) {
-            return res.status(404).send("no images found");
+            return res.status(404).send({ error: "Error, no images found" });
         }
 
         imagesNames = []
@@ -162,14 +159,14 @@ router.delete("/admin/image/:image_id", auth, async (req, res) => {
     try {
 
         if (req.user.accountType !== "admin") {
-            return res.status(403).send("must be an admin");
+            return res.status(403).send({ error: "Error, must be an admin" });
         }
 
         const { image_id } = req.params
         const img = await Images.findById(image_id)
 
         if (!img) {
-            return res.status(404).send("image not found");
+            return res.status(404).send({ error: "Error, image not found" });
         }
 
         if (img.has_been_purchased) {
@@ -198,8 +195,13 @@ router.put("/admin/image/:image_id/set_name", auth, [
         .isEmpty()
 ], async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
         if (req.user.accountType !== "admin") {
-            return res.status(403).send("must be an admin");
+            return res.status(403).send({ error: "Error, must be an admin" });
         }
 
         const { image_id } = req.params
@@ -208,11 +210,11 @@ router.put("/admin/image/:image_id/set_name", auth, [
         const img = await Images.findById(image_id)
 
         if (!img) {
-            return res.status(404).send("error, image not found");
+            return res.status(404).send({ error: "Error, image not found" });
         }
 
         if (!img.in_market) {
-            return res.status(400).send("Error, cant change name since this image was deleted");
+            return res.status(400).send({ error: "Error, cant change name since this image was deleted" });
         }
 
         await Images.findByIdAndUpdate(image_id, { nameOfImage: image_name })
@@ -236,30 +238,34 @@ router.put("/admin/image/:image_id/set_cost", auth, [
         .isEmpty()
 ], async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
         if (req.user.accountType !== "admin") {
-            return res.status(403).send("must be an admin");
+            return res.status(403).send({ error: "Error, must be an admin" });
         }
 
         const { image_id } = req.params
         const { cost } = req.body
 
         if (typeof cost !== 'number') {
-            //console.log()
-            return res.status(400).send("Cost must be numeric");
+            return res.status(400).send({ error: "Cost must be numeric" });
         }
 
         if (cost < 0) {
-            return res.status(400).send("Cost must be non negative");
+            return res.status(400).send({ error: "Cost must be non negative" });
         }
 
         const img = await Images.findById(image_id)
 
         if (!img) {
-            return res.status(404).send("error, image not found");
+            return res.status(404).send({ error: "Error, image not found" });
         }
 
         if (!img.in_market) {
-            return res.status(400).send("Error, cant change cost since this image was deleted");
+            return res.status(400).send({ error: "Error, cant change cost since this image was deleted" });
         }
 
         await Images.findByIdAndUpdate(image_id, { cost: cost })
@@ -284,35 +290,35 @@ router.put("/admin/image/:image_id/discount/amount", auth, [
         .isEmpty()
 ], async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
         if (req.user.accountType !== "admin") {
-            return res.status(403).send("must be an admin");
+            return res.status(403).send({ error: "Error, must be an admin" });
         }
 
         const { image_id } = req.params
         const { discount } = req.body
 
         if (typeof discount !== 'number') {
-            return res.status(400).send("discount must be numeric");
+            return res.status(400).send({ error: "Error, discount must be numeric" });
         }
 
         const img = await Images.findById(image_id)
 
         if (!img) {
-            return res.status(404).send("error, image not found");
+            return res.status(404).send({ error: "Error, image not found" });
         }
 
         if (!img.in_market) {
-            return res.status(400).send("Error, cant change discount since this image was deleted");
+            return res.status(400).send({ error: "Error, cant change discount since this image was deleted" });
         }
 
-        if (discount > img.cost) {
-            await Images.findByIdAndUpdate(image_id, { discount_amount: img.cost })
-        }
-        else {
-            await Images.findByIdAndUpdate(image_id, { discount_amount: discount })
-        }
-
+        const discountAmount = discount > img.cost ? img.cost : discount
+        await Images.findByIdAndUpdate(image_id, { discount_amount: discountAmount })
         const newImg = await Images.findById(image_id)
+
         res.json(newImg)
 
     } catch (error) {
@@ -328,7 +334,7 @@ router.put("/admin/image/:image_id/discount/amount", auth, [
 router.put("/admin/image/:image_id/discount/remove", auth, async (req, res) => {
     try {
         if (req.user.accountType !== "admin") {
-            return res.status(403).send("must be an admin");
+            return res.status(403).send({ error: "Error, must be an admin" });
         }
 
         const { image_id } = req.params
@@ -336,11 +342,11 @@ router.put("/admin/image/:image_id/discount/remove", auth, async (req, res) => {
         const img = await Images.findById(image_id)
 
         if (!img) {
-            return res.status(404).send("error, image not found");
+            return res.status(404).send({ error: "Error, image not found" });
         }
 
         if (!img.in_market) {
-            return res.status(409).send("Error, cant change discount since this image was deleted");
+            return res.status(409).send({ error: "Error, cant change discount since this image was deleted" });
         }
 
         await Images.findByIdAndUpdate(image_id, { discount_amount: 0 })
@@ -366,14 +372,10 @@ router.post("/customer/image/:image_id/purchase", auth, async (req, res) => {
 
         const img = await Images.findById(image_id)
         const customer = await User.findById(req.user.id)
-        if (!img) {
-            return res.status(404).send("Error, image not purchasable or not found")
-        }
 
-        if (!customer) {
-            return res.status(404).send("Error, customer account not found")
+        if (!(img && img.in_market)) {
+            return res.status(404).send({ error: "Error, image not purchasable or not found" })
         }
-
 
         // handle the payment
         const purchaseAmount = img.cost - img.discount_amount
@@ -382,38 +384,27 @@ router.post("/customer/image/:image_id/purchase", auth, async (req, res) => {
 
             const creditCardToken = req.body.card_token
 
-            const charge = await purchaseByCardToken({
+            const charge = await purchaseByCardToken(
                 creditCardToken,
                 purchaseAmount,
-                imageName
-            });
-
-            if (!charge) {
-                return res.json("error in stripe creating charge from token")
-            }
+                img.nameOfImage
+            );
 
         }
         else {
-
-
             const cards = await getAllCreditCards(
                 customer.stripeCustomerID
             );
 
             if (!cards) {
-                return res.status(402).send("Error, cards not found")
+                return res.status(402).send({ error: "Error, cards not found" })
             }
 
             const charge = await purchaseByCustomer(
                 customer.stripeCustomerID,
                 purchaseAmount,
-                imageName
+                img.nameOfImage
             );
-
-            if (!charge) {
-                return res.json("error in stripe creating charge from customer")
-            }
-
 
         }
 
@@ -424,7 +415,7 @@ router.post("/customer/image/:image_id/purchase", auth, async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        return res.status(500).send(error);
+        return res.status(500).send({ error: "Couldnt process a purchase" });
     }
 })
 
@@ -437,7 +428,7 @@ router.get("/customer/image/:image_id", auth, async (req, res) => {
         const customer = await User.findById(req.user.id)
 
         if (!customer) {
-            return res.status(404).send("Error, your account could not be found")
+            return res.status(404).send({ error: "Error, your account could not be found" })
         }
 
         const purchasedImages = customer.purchasedImages
@@ -446,7 +437,7 @@ router.get("/customer/image/:image_id", auth, async (req, res) => {
         });
 
         if (!userHasPurchased) {
-            return res.status(403).send("Error, you have not purchased this image and cannot access it")
+            return res.status(403).send({ error: "Error, you have not purchased this image and cannot access it" })
         }
 
         const image = await Images.findById(image_id)
@@ -467,7 +458,7 @@ router.get("/customer/images", auth, async (req, res) => {
         const customer = await User.findById(req.user.id)
 
         if (!customer) {
-            return res.status(404).send("Error, your account could not be found")
+            return res.status(404).send({ error: "Error, your account could not be found" })
         }
 
         const purchasedImages = customer.purchasedImages
@@ -482,7 +473,7 @@ router.get("/customer/images", auth, async (req, res) => {
         }))
 
         if (namesOfImages.length === 0) {
-            return res.json("seems like you havent purchased any images")
+            return res.status(403).send({ error: "Error, seems like you havent purchased any images" })
         }
 
         res.json(namesOfImages)

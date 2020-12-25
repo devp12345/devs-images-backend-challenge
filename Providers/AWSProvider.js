@@ -10,22 +10,37 @@ AWS.config.update({
 const s3 = new S3();
 
 
-const uploadFile = (buffer, name, type) => {
-    const params = {
-        Body: buffer,
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        ContentType: type.mime,
-        Key: `${name}`,
-    };
-    return s3.upload(params).promise();
+const uploadFile = async (buffer, name, type) => {
+
+    try {
+        const params = {
+            Body: buffer,
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            ContentType: type.mime,
+            Key: `${name}`,
+        };
+        const uploadObject = await s3.upload(params).promise()
+        return uploadObject
+    } catch (error) {
+        console.error(error)
+        res.status(500).send({ error: error })
+    }
 };
 
-const deleteFilesFunction = (fileId) => {
-    const params = {
-        Bucket: process.env.AWS_S3_BUCKET_NAME,
-        Key: `${fileId}`,
-    };
-    return s3.deleteObject(params).promise();
+const deleteFilesFunction = async (fileId) => {
+    try {
+        const params = {
+            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Key: `${fileId}`,
+        };
+
+        const deleteObject = await s3.deleteObject(params).promise()
+        return deleteObject
+    } catch (error) {
+        console.error(error)
+        res.status(500).send({ error: error })
+    }
+
 };
 
 

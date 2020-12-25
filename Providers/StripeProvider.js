@@ -13,7 +13,7 @@ const createCustomer = async (fullName, email) => {
         return customer
     } catch (error) {
         console.error(error)
-        return null
+        return res.status(500).send({ error: "Couldnt create a customer in stripe" });
     }
 }
 
@@ -24,7 +24,7 @@ const tokenizeCard = async (cardParams) => {
         return token
     } catch (error) {
         console.error(error)
-        return null
+        return res.status(500).send({ error: "Couldnt tokenize the card in stripe" });
     }
 }
 
@@ -39,7 +39,7 @@ const getCreditCard = async (stripeCustomerID, cardID) => {
         return card
     } catch (error) {
         console.error(error)
-        return null
+        return res.status(500).send({ error: "Couldnt get credit card in stripe" });
     }
 }
 
@@ -53,7 +53,7 @@ const getAllCreditCards = async (stripeCustomerID) => {
         return cards
     } catch (error) {
         console.error(error)
-        return null
+        return res.status(500).send({ error: "Couldnt get all credit cards in stripe" });
     }
 }
 
@@ -68,7 +68,7 @@ const saveCreditCardFromToken = async (stripeCustomerID, cardToken) => {
         return card
     } catch (error) {
         console.error(error)
-        return null
+        return res.status(500).send({ error: "Couldnt save a credit card from token in stripe" });
     }
 }
 
@@ -82,7 +82,7 @@ const deleteCreditCard = async (stripeCustomerID, cardID) => {
         return deletedCard
     } catch (error) {
         console.error(error)
-        return null
+        return res.status(500).send({ error: "Couldnt delete a credit card in stripe" });
     }
 }
 
@@ -92,11 +92,12 @@ const makeDefaultCard = async (stripeCustomerID, cardID) => {
         const defaultCard = await stripe.customers.update(
             stripeCustomerID,
             { default_source: cardID }
-        );
+        ).promise();
         return defaultCard
+
     } catch (error) {
         console.error(error)
-        return null
+        res.status(500).send({ error: "Couldnt make credit card the default for customer in stripe" });
     }
 }
 
@@ -113,7 +114,7 @@ const purchaseByCardToken = async (creditCardToken, purchaseAmount, imageName) =
         return charge
     } catch (error) {
         console.error(error)
-        return null
+        return res.status(500).send({ error: "Couldnt process a purchase by card token in stripe" });
     }
 }
 
@@ -130,7 +131,7 @@ const purchaseByCustomer = async (stripeCustomerID, purchaseAmount, imageName) =
         return charge
     } catch (error) {
         console.error(error)
-        return null
+        return res.status(500).send({ error: "Couldnt process a purchase by customer in stripe" });
     }
 }
 
