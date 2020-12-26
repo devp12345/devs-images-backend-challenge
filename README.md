@@ -55,7 +55,6 @@ STRIPE_API_KEY=
 5. `npm test` to run the tests
 
 ## Endpoints and Application flow
-- Documentation and sample calls for endpoints can be found ([Here](https://documenter.getpostman.com/view/8475596/TVsxBmfea))
 
 ### User/Customer flow
 - Customer register at `POST /register` which will return a signed token if successful
@@ -93,4 +92,4 @@ STRIPE_API_KEY=
 - Allow for Bulk operations, such as uploading, deleting, and setting discounts to multiple images at once
 - Convert to an online "marketplace" so that customer purchases will pay out to the admin who posts them
 - Containerize this server with Docker and host to allow for a reliable CI/CD pipeline
-- Complete documentation to outlines all the features, endpoints, requests/responses from the endpoints
+- Create documentation to outline all the features, endpoints, requests/responses from the endpoints and to provide sample calls to endpoints
