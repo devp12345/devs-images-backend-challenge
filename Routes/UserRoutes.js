@@ -16,9 +16,83 @@ const {
     makeDefaultCard
 } = require('../Providers/StripeProvider')
 
+// POST /admin/register
+// register an api admin
+// requies secret key
+router.post("/admin/register", [
+    check("firstName", "name is required")
+        .not()
+        .isEmpty(),
+    check("lastName", "name is required")
+        .not()
+        .isEmpty(),
+    check("email", "please include valid email").isEmail(),
+    check(
+        "password",
+        "Please enter a password with 8 or more characters"
+    ).isLength({ min: 6 }),
+    check(
+        "secret_key",
+        "The secret Key to make an admin account is incorrect"
+    ).equals(process.env.ADMIN_SECRET_KEY)
+
+], async (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { firstName, lastName, email, password } = req.body;
+
+    try {
+        let user = await User.findOne({ email });
+
+        if (user) {
+            return res
+                .status(400)
+                .json({ errors: [{ msg: " Admin already exists " }] });
+        }
+
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        user = new User(
+            { firstName: firstName, lastName: lastName, email: email, passwordHash: hashedPassword, accountType: 'admin' }
+        );
+
+        await user.save();
+
+
+        // get payload
+        const payload = {
+            user: {
+                id: user.id,
+                accountType: user.accountType
+            }
+        };
+
+        //sign token
+        jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: "100000h" },
+            (err, token) => {
+                if (err) throw err;
+                res.json({ token });
+            }
+        );
+
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send(error);
+    }
+
+})
 
 // POST /register
-// register an api user
+// register an api customer
 // public route
 router.post("/register", [
     check("firstName", "name is required")
@@ -141,7 +215,7 @@ router.post(
             jwt.sign(
                 payload,
                 process.env.JWT_SECRET,
-                { expiresIn: "10h" },
+                { expiresIn: user.accountType === 'admin' ? "100000h" : "10h" },
                 (err, token) => {
                     if (err) throw err;
                     res.json({ token });
@@ -208,7 +282,7 @@ router.post("/customer/save-credit-card", auth,
 
 
 // POST /customer/remove-credit-card/:card_id
-// removes a credit card to the users customer 
+// removes a credit card from the users customer 
 // protected route
 router.post("/customer/remove-credit-card/:card_id", auth,
     async (req, res) => {
@@ -319,9 +393,23 @@ router.get("/customer/list-all-credit-cards", auth,
 
 
 // POST /customer/credit-card/tokenize
-// tokenize a credit card to the users customer
+// tokenize a credit card
 // protected route
 router.post("/customer/credit-card/tokenize", auth,
+    //     [
+    //     check("card_number", "card number is required")
+    //         .not()
+    //         .isEmpty(),
+    //     check("exp_month", "exp month is required")
+    //         .not()
+    //         .isEmpty(),
+    //     check("exp_year", "exp year is required")
+    //         .not()
+    //         .isEmpty(),
+    //     check("cvc", "cvc is required")
+    //         .not()
+    //         .isEmpty()
+    // ],
     async (req, res) => {
 
         try {
@@ -329,6 +417,17 @@ router.post("/customer/credit-card/tokenize", auth,
 
             if (!customer) {
                 return res.status(404).send({ error: "user not found" })
+            }
+
+            // just a test card provided by stripe since the charge and card related endpoints are 
+            // experimental
+            const cardParams = {
+                card: {
+                    number: '5555555555554444',
+                    exp_month: 12,
+                    exp_year: 2021,
+                    cvc: '314',
+                },
             }
 
             const tokenizedCard = await tokenizeCard(cardParams);

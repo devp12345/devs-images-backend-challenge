@@ -16,7 +16,8 @@ const {
 
 const {
     deleteFilesFunction,
-    uploadFile
+    uploadFile,
+    getSignedUrl
 } = require("../Providers/AWSProvider")
 
 
@@ -186,10 +187,10 @@ router.delete("/admin/image/:image_id", auth, async (req, res) => {
 })
 
 
-// PUT /admin/image/:image_id/set_name
+// PUT /admin/image/:image_id/set-name
 // sets a name for the image (update)
 // Protected route
-router.put("/admin/image/:image_id/set_name", auth, [
+router.put("/admin/image/:image_id/set-name", auth, [
     check("image_name", "name is required")
         .not()
         .isEmpty()
@@ -229,10 +230,10 @@ router.put("/admin/image/:image_id/set_name", auth, [
 
 })
 
-// PUT /admin/image/:image_id/set_cost
+// PUT /admin/image/:image_id/set-cost
 // sets a price for the image (update)
 // Protected route
-router.put("/admin/image/:image_id/set_cost", auth, [
+router.put("/admin/image/:image_id/set-cost", auth, [
     check("cost", "cost is required")
         .not()
         .isEmpty()
@@ -442,7 +443,9 @@ router.get("/customer/image/:image_id", auth, async (req, res) => {
 
         const image = await Images.findById(image_id)
 
-        res.json(image.nameOfImage)
+        const imageUrl = await getSignedUrl(image._id, 600)
+
+        res.json({ url: imageUrl })
 
     } catch (error) {
         console.error(error);
@@ -463,26 +466,27 @@ router.get("/customer/images", auth, async (req, res) => {
 
         const purchasedImages = customer.purchasedImages
 
-        const namesOfImages = await Promise.all(purchasedImages.map(async (image) => {
+        const objectsOfImages = await Promise.all(purchasedImages.map(async (image) => {
             const img = await Images.findById(image)
             if (img) {
-                return img.nameOfImage
+                return img //.nameOfImage
             }
             return null
 
         }))
 
-        if (namesOfImages.length === 0) {
+        if (objectsOfImages.length === 0) {
             return res.status(403).send({ error: "Error, seems like you havent purchased any images" })
         }
 
-        res.json(namesOfImages)
+        res.json(objectsOfImages)
 
     } catch (error) {
         console.error(error);
         return res.status(500).send(error);
     }
 })
+
 
 // #weDontDoRefunds :)
 
