@@ -87,9 +87,10 @@ STRIPE_API_KEY=
 ## Next steps
 - Complete all unit and integration tests to ensure 100% coverage
 - Implement a safe and secure way to send credit card info over an http request (righ now, I am using hard coded test cards provided by Stripe) to allow real functionallity
-- Allow users to safely and securely pay using other emthods (Debit, bitcoin, etc)
+- Allow users to safely and securely pay using other methods (Debit, bitcoin, etc)
 - Enable refunds on transactions
 - Allow for Bulk operations, such as uploading, deleting, and setting discounts to multiple images at once
-- Convert to an online "marketplace" so that customer purchases will pay out to the admin who posts them
+- Enable timed discounts so that discounts are automaitcally removed 
+- Convert to an online "marketplace" by onboarding vendors so that customer purchases will pay out to the person who took the image
 - Containerize this server with Docker and host to allow for a reliable CI/CD pipeline
 - Create documentation to outline all the features, endpoints, requests/responses from the endpoints and to provide sample calls to endpoints
