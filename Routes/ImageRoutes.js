@@ -20,14 +20,6 @@ const {
     getSignedUrl
 } = require("../Providers/AWSProvider")
 
-
-/**
- * Token for the admin
- *
- * eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNWZlMjUwMWI2MzQ2MGM1ZjkyZmYyYjEwIiwiYWNjb3VudFR5cGUiOiJhZG1pbiJ9LCJpYXQiOjE2MDg2NjcxNjMsImV4cCI6MTk2ODY2NzE2M30.F9x73kPB4uaoYJPwRBT7XtJiQ-tqKzFfw5iBcooEcO4
- * 
- */
-
 // POST /admin/upload
 // Uploads a single photo to the "store"
 // Protected route
@@ -98,7 +90,7 @@ router.post("/admin/image/upload", auth, async (req, res) => {
 
 
 // GET /admin/images/:image_id
-// GETS the name of the specified image
+// GETS the object of the specified image
 // Protected route
 router.get("/admin/image/:image_id", auth, async (req, res) => {
     try {
@@ -114,7 +106,7 @@ router.get("/admin/image/:image_id", auth, async (req, res) => {
             return res.status(404).send({ error: "Error, image not found" });
         }
 
-        res.json(img.nameOfImage)
+        res.json(img)
     } catch (error) {
         console.error(error);
         return res.status(500).send(error);
@@ -123,7 +115,7 @@ router.get("/admin/image/:image_id", auth, async (req, res) => {
 })
 
 // GET /admin/images
-// GETS all image names 
+// GETS all image objects 
 // Protected route
 router.get("/admin/images", auth, async (req, res) => {
     try {
@@ -136,13 +128,6 @@ router.get("/admin/images", auth, async (req, res) => {
         if (!all) {
             return res.status(404).send({ error: "Error, no images found" });
         }
-
-        imagesNames = []
-        all.forEach(image => {
-            if (image.in_market) {
-                imagesNames.push(image.nameOfImage)
-            }
-        })
 
         res.json(all)
     } catch (error) {
