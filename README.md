@@ -60,7 +60,7 @@ STRIPE_API_KEY=
 - Customer register at `POST /register` which will return a signed token if successful
 - Customer can login at `POST /login` which will return a signed token if successful
 - Customer can now access protected routes with their token to adjust their profile:
-  - `POST /customer/credit-card/tokenize` which will tokenize a card (for now, hard coded to tokenize a test card provided by stripe)
+  - `POST /customer/credit-card/tokenize` which will tokenize a card (for now, this endpoint is hard coded and can only tokenize a test card provided by stripe)
   - `POST /customer/save-credit-card` which will save a credit card to the users customer profile
   - `POST /customer/remove-credit-card/:card_id` will remove a card, where card_id is the stripe tokenized card id
   - `GET /customer/list-all-credit-cards` will return all the users credit cards (as tokenized objects)
