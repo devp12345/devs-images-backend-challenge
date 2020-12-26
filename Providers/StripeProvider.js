@@ -92,7 +92,7 @@ const makeDefaultCard = async (stripeCustomerID, cardID) => {
         const defaultCard = await stripe.customers.update(
             stripeCustomerID,
             { default_source: cardID }
-        ).promise();
+        );
         return defaultCard
 
     } catch (error) {
