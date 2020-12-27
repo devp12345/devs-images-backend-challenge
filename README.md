@@ -1,5 +1,5 @@
 # Shopify Backend Challenge for Summer 2021
-My take on the Shopify backend challenge for Summer 2021, **Devs-Images!
+My take on the Shopify backend challenge for Summer 2021, **Devs-Images!**
 
 ## Scope
 
