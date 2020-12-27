@@ -84,6 +84,14 @@ STRIPE_API_KEY=
   - `PUT /admin/image/:image_id/discount/remove` removes the discount
 
 
+## Testing
+The server must be running for testing to work
+
+Upon running `npm test`, your output should be similar to this:
+Running the tests should give you an image similar to this:
+![testing photo](https://user-images.githubusercontent.com/42615089/103162365-a9514a00-47bd-11eb-9f34-e6c0280eba21.png)
+indicating the unit test and integration test have passed
+
 ## Next steps
 - Complete all unit and integration tests to ensure 100% coverage
 - Implement a safe and secure way to send credit card info over an http request (righ now, I am using hard coded test cards provided by Stripe) to allow real functionallity
