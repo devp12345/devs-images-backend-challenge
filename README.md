@@ -3,7 +3,7 @@ My take on the Shopify backend challenge for Summer 2021, **Devs-Images!**
 
 ## Scope
 
-The inspiration for this was an online image store, where customers can purchase images/wallpapers from me and select friends
+The inspiration for this was an online image store, where customers can purchase images/wallpapers from me and select people (admins)
 
 The goal of this image repository is to:
 - Allow admins to upload images to a reliable service ([AWS S3](https://aws.amazon.com/s3/)) 
