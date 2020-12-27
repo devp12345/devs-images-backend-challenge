@@ -13,7 +13,7 @@ The goal of this image repository is to:
 - Allow users to download images they have purchased
 - Ensure customers can only access images they have purchased (permissions)
 - Allow customers to add/remove/change credit cards in a safe and secure way ([Stripe](https://stripe.com/en-ca)) 
-(note: some of the transaction/credit-card/([Stripe](https://stripe.com/en-ca)) related routes are experimental)
+(note: some of the transaction/credit-card/Stripe related routes are experimental)
 
 ## Setup 
 
