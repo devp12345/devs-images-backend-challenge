@@ -1,6 +1,3 @@
-# Shopify Backend Challenge for Summer 2021
-My take on the Shopify backend challenge for Summer 2021, **Devs-Images!**
-
 ## Scope
 
 The inspiration for this was an online image store, where customers can purchase images/wallpapers from me and select people (admins)
