@@ -1,4 +1,4 @@
-# Devs Images: Shopify Backend Challenge Submission
+# Devs Images: Shopify Developer Challenge Submission
 ## Scope
 
 The inspiration for this was an online image store, where customers can purchase images/wallpapers from me and select people (admins)
